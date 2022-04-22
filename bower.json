@@ -1,0 +1,25 @@
+{
+    "name": "purescript-splitmix",
+    "license": [
+        "MPL-2.0"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/the-dr-lazy/purescript-splitmix"
+    },
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "output"
+    ],
+    "dependencies": {
+        "purescript-console": "^v5.0.0",
+        "purescript-const": "^v5.0.0",
+        "purescript-control": "^v5.0.0",
+        "purescript-effect": "^v3.0.0",
+        "purescript-prelude": "^v5.0.1",
+        "purescript-psci-support": "^v5.0.0",
+        "purescript-transformers": "^v5.2.0"
+    }
+}
