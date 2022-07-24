@@ -14,6 +14,7 @@ module Random.SplitMix
   , mk
   , nextInt
   , nextNumber
+  , nextUInt64
   , split
   )
   where
