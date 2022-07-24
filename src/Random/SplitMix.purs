@@ -9,7 +9,14 @@ License, version 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -}
 
-module Random.SplitMix where
+module Random.SplitMix
+  ( SMGen(..)
+  , mk
+  , nextInt
+  , nextNumber
+  , split
+  )
+  where
 
 import Prelude
 import Data.Ord (abs)
@@ -20,7 +27,7 @@ import Data.Int as Int
 import Partial.Unsafe (unsafePartial)
 import Data.Maybe (fromJust)
 
-newtype SMGen = SMGen { seed :: UInt64, gamma :: UInt64 }
+newtype SMGen = Unsafe_SMGen { seed :: UInt64, gamma :: UInt64 }
 
 derive newtype instance Show SMGen
 
@@ -29,7 +36,7 @@ derive newtype instance Show SMGen
 --
 
 mk :: Int -> SMGen
-mk int32 = SMGen { seed: mix64 seed, gamma: mixGamma (seed + goldenGamma) }
+mk int32 = Unsafe_SMGen { seed: mix64 seed, gamma: mixGamma (seed + goldenGamma) }
   where seed = unsafePartial (fromJust <<< UInt64.fromInt <<< abs $ int32)
 
 -------------------------------------------------------
@@ -42,11 +49,11 @@ mk int32 = SMGen { seed: mix64 seed, gamma: mixGamma (seed + goldenGamma) }
 -- ["b5c19e300e8b07b3","d600e0e216c0ac76","c54efc3b3cc5af29"]
 --
 nextUInt64 :: SMGen -> Tuple UInt64 SMGen
-nextUInt64 (SMGen { seed, gamma }) =
-  let seed' = seed + gamma in Tuple (mix64 seed') (SMGen { seed: seed', gamma })
+nextUInt64 (Unsafe_SMGen { seed, gamma }) =
+  let seed' = seed + gamma in Tuple (mix64 seed') (Unsafe_SMGen { seed: seed', gamma })
 
 nextInt :: SMGen -> Tuple Int SMGen
-nextInt (SMGen { seed, gamma }) = Tuple (mix32 seed) (SMGen { seed: seed + gamma, gamma })
+nextInt (Unsafe_SMGen { seed, gamma }) = Tuple (mix32 seed) (Unsafe_SMGen { seed: seed + gamma, gamma })
 
 nextNumber :: SMGen -> Tuple Number SMGen
 nextNumber gen = case nextUInt64 gen of
@@ -58,12 +65,12 @@ nextNumber gen = case nextUInt64 gen of
 
 -- | Split a generator into a two uncorrelated generators.
 split :: SMGen -> Tuple SMGen SMGen
-split (SMGen { seed, gamma }) =
+split (Unsafe_SMGen { seed, gamma }) =
   let
     seed'  = seed + gamma
     seed'' = seed' + gamma
-    gen' = SMGen { seed: seed'', gamma }
-    gen'' = SMGen { seed: mix64 seed', gamma: mixGamma seed'' }
+    gen' = Unsafe_SMGen { seed: seed'', gamma }
+    gen'' = Unsafe_SMGen { seed: mix64 seed', gamma: mixGamma seed'' }
   in Tuple gen' gen''
 
 -------------------------------------------------------
