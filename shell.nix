@@ -47,7 +47,7 @@ pkgs.stable.mkShell {
         vscode-html-languageserver-bin
         vscode-json-languageserver-bin
         yaml-language-server;
-      inherit (pkgs.unstable.nodePackages)
+      inherit (pkgs.stable)
         purescript-language-server;
     }
 
