@@ -12,14 +12,20 @@ to generate this file without the comments in this block.
 -}
 { name = "splitmix"
 , dependencies =
-  [ "prelude"
-  , "maybe"
-  , "partial"
-  , "integers"
-  , "tuples"
-  , "int64"
+  [ "aff"
   , "console"
   , "effect"
+  , "int64"
+  , "integers"
+  , "maybe"
+  , "ordered-collections"
+  , "partial"
+  , "prelude"
+  , "quickcheck"
+  , "spec"
+  , "tailrec"
+  , "transformers"
+  , "tuples"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

@@ -16,21 +16,22 @@ module Random.SplitMix
   , nextNumber
   , nextUInt64
   , split
-  )
-  where
+  ) where
 
 import Prelude
+
+import Data.Int as Int
+import Data.Maybe (fromJust)
 import Data.Ord (abs)
+import Data.Tuple (Tuple(..))
 import Data.UInt64 (UInt64)
 import Data.UInt64 as UInt64
-import Data.Tuple (Tuple(..))
-import Data.Int as Int
 import Partial.Unsafe (unsafePartial)
-import Data.Maybe (fromJust)
 
 newtype SMGen = Unsafe_SMGen { seed :: UInt64, gamma :: UInt64 }
 
-derive newtype instance Show SMGen
+instance Show SMGen where
+  show (Unsafe_SMGen { seed, gamma }) = "SMGen " <> show seed <> " " <> show gamma
 
 -------------------------------------------------------
 -- Initialization
@@ -38,7 +39,8 @@ derive newtype instance Show SMGen
 
 mk :: Int -> SMGen
 mk int32 = Unsafe_SMGen { seed: mix64 seed, gamma: mixGamma (seed + goldenGamma) }
-  where seed = unsafePartial (fromJust <<< UInt64.fromInt <<< abs $ int32)
+  where
+  seed = unsafePartial (fromJust <<< UInt64.fromInt <<< abs $ int32)
 
 -------------------------------------------------------
 -- Operations
@@ -68,11 +70,12 @@ nextNumber gen = case nextUInt64 gen of
 split :: SMGen -> Tuple SMGen SMGen
 split (Unsafe_SMGen { seed, gamma }) =
   let
-    seed'  = seed + gamma
+    seed' = seed + gamma
     seed'' = seed' + gamma
     gen' = Unsafe_SMGen { seed: seed'', gamma }
     gen'' = Unsafe_SMGen { seed: mix64 seed', gamma: mixGamma seed'' }
-  in Tuple gen' gen''
+  in
+    Tuple gen' gen''
 
 -------------------------------------------------------
 -- Algorithm
@@ -97,7 +100,6 @@ mixB = unsafePartial (fromJust $ UInt64.fromString "14181476777654086739")
 mixVariantA :: UInt64
 mixVariantA = unsafePartial (fromJust $ UInt64.fromString "13787848793156543929")
 
-
 -- | 94D0 49BB 1331 11EB
 mixVariantB :: UInt64
 mixVariantB = unsafePartial (fromJust $ UInt64.fromString "10723151780598845931")
@@ -108,40 +110,47 @@ mixGammaA = unsafePartial (fromJust $ UInt64.fromString "12297829382473034410")
 
 mix64 :: UInt64 -> UInt64
 mix64 z0 =
-   -- MurmurHash3Mixer
-    let z1 = shiftXorMultiply 33 mixA z0
-        z2 = shiftXorMultiply 33 mixB z1
-        z3 = shiftXor 33 z2
-    in z3
+  -- MurmurHash3Mixer
+  let
+    z1 = shiftXorMultiply 33 mixA z0
+    z2 = shiftXorMultiply 33 mixB z1
+    z3 = shiftXor 33 z2
+  in
+    z3
 
 mix32 :: UInt64 -> Int
 mix32 z0 =
-    let z1 = shiftXorMultiply 33 mixA z0
-        z2 = shiftXorMultiply 33 mixB z1
-        z3 = shiftXor 32 z2
-    in UInt64.lowBits z3
+  let
+    z1 = shiftXorMultiply 33 mixA z0
+    z2 = shiftXorMultiply 33 mixB z1
+    z3 = shiftXor 32 z2
+  in
+    UInt64.lowBits z3
 
 -- used only in mixGamma
 mix64variant13 :: UInt64 -> UInt64
 mix64variant13 z0 =
-   -- Better Bit Mixing - Improving on MurmurHash3's 64-bit Finalizer
-   -- http://zimbry.blogspot.fi/2011/09/better-bit-mixing-improving-on.html
-   --
-   -- Stafford's Mix13
-    let z1 = shiftXorMultiply 30 mixVariantA z0 -- MurmurHash3 mix constants
-        z2 = shiftXorMultiply 27 mixVariantB z1
-        z3 = shiftXor 31 z2
-    in z3
+  -- Better Bit Mixing - Improving on MurmurHash3's 64-bit Finalizer
+  -- http://zimbry.blogspot.fi/2011/09/better-bit-mixing-improving-on.html
+  --
+  -- Stafford's Mix13
+  let
+    z1 = shiftXorMultiply 30 mixVariantA z0 -- MurmurHash3 mix constants
+    z2 = shiftXorMultiply 27 mixVariantB z1
+    z3 = shiftXor 31 z2
+  in
+    z3
 
 mixGamma :: UInt64 -> UInt64
 mixGamma z0 =
-    let z1 = mix64variant13 z0 `UInt64.or` (UInt64.unsafeFromInt 1)             -- force to be odd
-        n  = popCount (z1 `UInt64.xor` (z1 `UInt64.zshr` UInt64.unsafeFromInt 1))
-    -- see: http://www.pcg-random.org/posts/bugs-in-splitmix.html
-    -- let's trust the text of the paper, not the code.
-    in if n >= 24
-        then z1
-        else z1 `UInt64.xor` mixGammaA
+  let
+    z1 = mix64variant13 z0 `UInt64.or` (UInt64.unsafeFromInt 1) -- force to be odd
+    n = popCount (z1 `UInt64.xor` (z1 `UInt64.zshr` UInt64.unsafeFromInt 1))
+  -- see: http://www.pcg-random.org/posts/bugs-in-splitmix.html
+  -- let's trust the text of the paper, not the code.
+  in
+    if n >= 24 then z1
+    else z1 `UInt64.xor` mixGammaA
 
 foreign import intPopCount :: Int -> Int
 
